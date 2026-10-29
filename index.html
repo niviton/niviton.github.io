@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uma Corte de Estrelas e Rosas</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --noite:#0b1026; --noite2:#141b3d; --ouro:#d4af6a; --ouro2:#f1d9a0;
+    --papel:#f4ead5; --tinta:#2b2233; --rosa:#8e2b3d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:radial-gradient(ellipse at top,#1d2654 0%,var(--noite) 60%,#05070f 100%);
+    color:var(--tinta);font-family:'Cormorant Garamond',serif;
+    overflow:hidden;display:flex;align-items:center;justify-content:center;
+  }
+  #estrelas{position:fixed;inset:0;pointer-events:none;z-index:0}
+  .estrela{position:absolute;background:#fff;border-radius:50%;animation:brilho 3s infinite ease-in-out}
+  @keyframes brilho{0%,100%{opacity:.2}50%{opacity:1}}
+
+  .livro{position:relative;z-index:1;width:min(92vw,520px);height:min(86vh,760px);perspective:2000px}
+  .pagina{
+    position:absolute;inset:0;border-radius:6px 14px 14px 6px;
+    background:var(--papel);
+    background-image:radial-gradient(circle at 30% 20%,rgba(255,255,255,.5),transparent 60%),
+      radial-gradient(circle at 80% 90%,rgba(160,120,60,.18),transparent 55%);
+    box-shadow:inset 18px 0 30px -18px rgba(80,50,20,.45),0 20px 50px rgba(0,0,0,.6);
+    padding:38px 30px 70px;overflow-y:auto;display:none;transform-origin:left center;
+    border:1px solid rgba(140,100,40,.35);
+  }
+  .pagina.ativa{display:block}
+  .pagina.saindo{display:block;animation:virar .7s ease-in forwards;z-index:3}
+  .pagina.voltando{display:block;animation:desvirar .7s ease-out forwards;z-index:3}
+  @keyframes virar{to{transform:rotateY(-110deg);opacity:0}}
+  @keyframes desvirar{from{transform:rotateY(-110deg);opacity:0}to{transform:rotateY(0);opacity:1}}
+
+  .moldura{position:absolute;inset:10px;border:1px solid rgba(160,120,50,.45);border-radius:4px;pointer-events:none}
+  .moldura::before,.moldura::after{content:"❦";position:absolute;color:var(--ouro);font-size:20px}
+  .moldura::before{top:-12px;left:50%;transform:translateX(-50%);background:var(--papel);padding:0 6px}
+  .moldura::after{bottom:-12px;left:50%;transform:translateX(-50%) rotate(180deg);background:var(--papel);padding:0 6px}
+  .pagina:not(.capa) .moldura{display:none}
+  .pagina:not(.capa){border:3px double rgba(160,120,50,.55)}
+
+  h1,h2,h3{font-family:'Cinzel',serif;text-align:center;color:var(--noite2)}
+  .num{font-family:'Cinzel',serif;text-align:center;color:var(--rosa);letter-spacing:4px;font-size:.85rem;margin-bottom:6px}
+  h2{font-size:1.45rem;margin-bottom:18px}
+  h2::after{content:"✦ ✦ ✦";display:block;color:var(--ouro);font-size:.8rem;letter-spacing:6px;margin-top:8px}
+  p{font-size:1.2rem;line-height:1.6;margin-bottom:14px;text-align:justify;hyphens:auto}
+  p.capitular::first-letter{font-family:'Cinzel',serif;float:left;font-size:3.4rem;line-height:.9;padding:4px 8px 0 0;color:var(--rosa)}
+  .citacao{font-style:italic;text-align:center;color:var(--rosa);margin:18px 0}
+
+  .foto{margin:18px auto;width:85%;aspect-ratio:4/3;border:6px solid #fff;outline:1px solid var(--ouro);
+    box-shadow:0 6px 18px rgba(0,0,0,.25);transform:rotate(-1.5deg);background:#e7dcc3;position:relative;overflow:hidden}
+  .foto img{width:100%;height:100%;object-fit:cover;display:block}
+  .foto .vazia{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;
+    color:#8a7550;font-style:italic;font-size:1rem;padding:10px}
+  .foto .vazia{display:none}
+  .legenda{text-align:center;font-style:italic;font-size:1rem;color:#6b5a40;margin-top:-6px;margin-bottom:14px}
+
+  .galeria{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+  .galeria figure{background:#fff;padding:6px 6px 4px;box-shadow:0 4px 12px rgba(0,0,0,.2);transform:rotate(-1deg)}
+  .galeria figure:nth-child(even){transform:rotate(1.5deg)}
+  .galeria img{width:100%;aspect-ratio:3/4;object-fit:cover;display:block}
+  .galeria figcaption{font-style:italic;font-size:.9rem;text-align:center;color:#6b5a40;padding-top:4px}
+
+  /* Capa */
+  .capa{background:linear-gradient(145deg,#1a2250,#0b1026 70%);color:var(--ouro2);text-align:center;
+    display:none;flex-direction:column;align-items:center;justify-content:center;border:2px solid var(--ouro);padding:40px 26px}
+  .capa.ativa,.capa.saindo,.capa.voltando{display:flex}
+  .capa .moldura{border-color:var(--ouro)}
+  .capa .moldura::before,.capa .moldura::after{background:#141b3d}
+  .capa h1{color:var(--ouro2);font-size:2rem;line-height:1.25;margin:18px 0}
+  .capa .sub{font-style:italic;font-size:1.25rem;color:#cfc3a3}
+  .capa .rosa{font-size:3.4rem;filter:drop-shadow(0 0 12px rgba(212,175,106,.6))}
+  .botao{margin-top:28px;font-family:'Cinzel',serif;background:transparent;color:var(--ouro2);border:1px solid var(--ouro);
+    padding:12px 26px;border-radius:30px;font-size:1rem;cursor:pointer;letter-spacing:2px}
+  .botao:hover{background:rgba(212,175,106,.15)}
+  .contador{margin-top:22px;font-size:1.05rem;color:#cfc3a3}
+  .contador b{color:var(--ouro2);font-family:'Cinzel',serif}
+
+  /* Navegação */
+  .nav{position:fixed;bottom:18px;left:0;right:0;display:flex;justify-content:center;gap:16px;z-index:5}
+  .nav button{font-family:'Cinzel',serif;background:rgba(11,16,38,.85);color:var(--ouro2);border:1px solid var(--ouro);
+    width:46px;height:46px;border-radius:50%;font-size:1.2rem;cursor:pointer}
+  .nav button:disabled{opacity:.3}
+  .nav span{color:var(--ouro2);font-family:'Cinzel',serif;align-self:center;font-size:.85rem;min-width:60px;text-align:center}
+
+  /* Charada */
+  .charada{background:rgba(142,43,61,.06);border:1px dashed var(--rosa);padding:18px;border-radius:8px;margin:16px 0}
+  .charada p{text-align:center;font-style:italic}
+  input.resposta{width:100%;padding:12px;font-family:'Cormorant Garamond',serif;font-size:1.2rem;border:1px solid var(--ouro);
+    border-radius:6px;background:#fffaf0;text-align:center;margin-top:8px}
+  .botao.escuro{color:var(--noite2);border-color:var(--rosa);display:block;margin:16px auto 0}
+  #retorno{text-align:center;font-style:italic;margin-top:12px;min-height:1.5em;color:var(--rosa)}
+  .bloqueada{filter:blur(6px);user-select:none;pointer-events:none;transition:filter 1.2s}
+  .assinatura{text-align:right;font-style:italic;margin-top:20px;font-size:1.25rem}
+
+  /* ===== MAGIA ===== */
+  #ceu{position:fixed;inset:0;z-index:0;pointer-events:none}
+  #estrelas{display:none}
+  .aurora{position:fixed;inset:-20%;z-index:0;pointer-events:none;opacity:.55;
+    background:radial-gradient(ellipse at 20% 30%,rgba(120,80,200,.35),transparent 55%),
+      radial-gradient(ellipse at 80% 70%,rgba(40,120,180,.3),transparent 55%),
+      radial-gradient(ellipse at 50% 100%,rgba(142,43,61,.35),transparent 60%);
+    animation:aurora 18s ease-in-out infinite alternate;filter:blur(30px)}
+  @keyframes aurora{to{transform:translate(4%,-3%) rotate(6deg) scale(1.08)}}
+  .petala{position:fixed;top:-40px;z-index:4;pointer-events:none;width:14px;height:12px;
+    background:radial-gradient(circle at 30% 30%,#d9475f,#7a1c2e);border-radius:80% 0 80% 0;
+    opacity:.85;animation:cair linear forwards}
+  @keyframes cair{to{transform:translate(var(--dx),110vh) rotate(var(--r));opacity:.2}}
+  .faisca{position:fixed;z-index:9;pointer-events:none;width:6px;height:6px;border-radius:50%;
+    background:#fff6d6;box-shadow:0 0 8px 2px #f1d9a0,0 0 18px 4px rgba(212,175,106,.6);
+    animation:faisca .9s ease-out forwards}
+  @keyframes faisca{to{transform:translate(var(--dx),var(--dy)) scale(0);opacity:0}}
+
+  .livro{filter:drop-shadow(0 0 30px rgba(212,175,106,.18))}
+  .livro::before{content:"";position:absolute;inset:-6px;border-radius:12px 18px 18px 12px;z-index:-1;
+    background:conic-gradient(from var(--ang,0deg),transparent,rgba(212,175,106,.55),transparent 30%,transparent 60%,rgba(142,43,61,.5),transparent);
+    animation:girar 8s linear infinite;filter:blur(8px)}
+  @property --ang{syntax:'<angle>';inherits:false;initial-value:0deg}
+  @keyframes girar{to{--ang:360deg}}
+
+  .pagina:not(.capa){background-color:#f4ead5;
+    background-image:radial-gradient(circle at 30% 20%,rgba(255,255,255,.55),transparent 60%),
+      radial-gradient(circle at 80% 90%,rgba(160,120,60,.18),transparent 55%),
+      radial-gradient(ellipse at center,transparent 60%,rgba(120,80,30,.22) 100%)}
+  h2{background:linear-gradient(90deg,#141b3d,#8e2b3d,#141b3d);-webkit-background-clip:text;background-clip:text;color:transparent}
+  p.capitular::first-letter{background:linear-gradient(160deg,#f1d9a0,#d4af6a 40%,#8e2b3d);
+    -webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none}
+
+  .pagina.ativa .num,.pagina.ativa h2,.pagina.ativa p,.pagina.ativa .foto,.pagina.ativa .galeria,.pagina.ativa .charada,.pagina.ativa .legenda{
+    animation:surgir .9s ease both}
+  .pagina.ativa > *:nth-child(2){animation-delay:.05s}.pagina.ativa > *:nth-child(3){animation-delay:.15s}
+  .pagina.ativa > *:nth-child(4){animation-delay:.25s}.pagina.ativa > *:nth-child(5){animation-delay:.35s}
+  .pagina.ativa > *:nth-child(6){animation-delay:.45s}.pagina.ativa > *:nth-child(n+7){animation-delay:.55s}
+  @keyframes surgir{from{opacity:0;transform:translateY(14px);filter:blur(3px)}to{opacity:1;transform:none;filter:none}}
+
+  .foto{transition:transform .5s}
+  .foto:hover{transform:rotate(0) scale(1.03)}
+  .foto::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.35) 50%,transparent 60%);
+    background-size:250% 100%;animation:brilhoFoto 5s ease-in-out infinite}
+  @keyframes brilhoFoto{0%,60%{background-position:150% 0}100%{background-position:-50% 0}}
+
+  .capa h1{background:linear-gradient(100deg,#b8913f 20%,#fff3cf 40%,#d4af6a 50%,#fff3cf 60%,#b8913f 80%);
+    background-size:250% auto;-webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:ouro 4s linear infinite;filter:drop-shadow(0 0 10px rgba(212,175,106,.45))}
+  @keyframes ouro{to{background-position:-250% center}}
+  .capa .rosa{animation:pulsar 3s ease-in-out infinite}
+  @keyframes pulsar{50%{transform:scale(1.12);filter:drop-shadow(0 0 22px rgba(217,71,95,.8))}}
+  .anel{position:absolute;width:260px;height:260px;top:50%;left:50%;margin:-200px 0 0 -130px;pointer-events:none;
+    border:1px dashed rgba(212,175,106,.35);border-radius:50%;animation:girarAnel 40s linear infinite}
+  .anel::before,.anel::after{content:"✦";position:absolute;color:var(--ouro);font-size:14px}
+  .anel::before{top:-9px;left:50%}.anel::after{bottom:-9px;left:50%}
+  @keyframes girarAnel{to{transform:rotate(360deg)}}
+  .botao{position:relative;overflow:hidden;box-shadow:0 0 18px rgba(212,175,106,.25)}
+  .botao::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;
+    background:linear-gradient(90deg,transparent,rgba(255,246,214,.45),transparent);animation:varrer 3s infinite}
+  @keyframes varrer{to{left:130%}}
+  .capa.abrindo{animation:abrir 1.1s ease-in forwards}
+  @keyframes abrir{40%{filter:brightness(1.8)}100%{transform:rotateY(-120deg) scale(1.05);opacity:0}}
+  .charada{box-shadow:inset 0 0 30px rgba(142,43,61,.08)}
+  .liberou{animation:liberou 1.5s ease}
+  @keyframes liberou{30%{box-shadow:0 0 60px 20px rgba(241,217,160,.9)}}
+</style>
+</head>
+<body>
+<div class="aurora"></div><canvas id="ceu"></canvas><div id="estrelas"></div>
+
+<div class="livro" id="livro">
+
+  <!-- CAPA -->
+  <section class="pagina capa ativa">
+    <div class="moldura"></div>
+    <div class="anel"></div><div class="rosa">🌹</div>
+    <h1>Uma Corte de<br>Estrelas e Rosas</h1>
+    <div class="sub">A história de Ester e Niviton</div>
+    <div class="contador" id="contador">Unidos pelo vínculo há <b>...</b></div>
+    <button class="botao" onclick="abrirLivro(event)">Abrir o livro</button>
+  </section>
+
+  <!-- DEDICATÓRIA -->
+  <section class="pagina">
+    <div class="moldura"></div>
+    <h2>Dedicatória</h2>
+    <p class="citacao">Para Ester,<br>que lê histórias de amor como quem procura a própria.<br><br>Esta é a nossa.</p>
+    <p class="citacao">Às estrelas que nos ouviram,<br>e a cada sonho que elas decidiram atender.</p>
+    <p class="citacao">✦</p>
+    <p style="text-align:center">Vire as páginas com calma. No fim, há uma porta trancada, e só a Grã-Senhora desta corte sabe a palavra que a abre.</p>
+  </section>
+
+  <!-- PRÓLOGO -->
+  <section class="pagina">
+    <div class="moldura"></div>
+    <div class="num">PRÓLOGO</div>
+    <h2>Duas Cortes Distantes</h2>
+    <p class="capitular">Antes de existir um "nós", existiam dois reinos que mal se olhavam. Em um deles vivia Niviton, um rapaz que fazia piada de tudo, que transformava qualquer silêncio em riso e que nunca levou a vida muito a sério, exceto quando o assunto era o próprio coração.</p>
+    <p>No outro reino vivia Ester, uma moça de olhar afiado como lâmina feérica. Quem a via de longe jurava que ela era braba, fria, quase cruel. O rapaz, inclusive, acreditava nisso. E, como todo mortal prudente diante de uma criatura perigosa, ele manteve distância.</p>
+    <p>Os dois vinham da mesma terra: Lagoa de Velhos, um pequeno reino do interior onde, sem saber, o destino já tinha começado a tecer o fio que os uniria.</p>
+    <p>Mal sabia ele que, por trás daquela expressão, morava uma das almas mais doces e teimosas de toda Prythian.</p>
+  </section>
+
+  <!-- CAP I -->
+  <section class="pagina">
+    <div class="moldura"></div>
+    <div class="num">CAPÍTULO I</div>
+    <h2>A Emissária</h2>
+    <p class="capitular">Toda grande história precisa de uma mensageira, e a nossa também teve a sua. Ligada a ele pelo sangue e a ela pela amizade, a mensageira caminhava entre as duas cortes carregando recados que ninguém tinha coragem de dizer em voz alta.</p>
+    <p>Até que um dia ela trouxe o recado que mudaria tudo: <i>"Ela te achou uma pessoa interessante… a ponto de querer provar os seus lábios."</i></p>
+    <p>O rapaz ficou sem reação. A moça de olhar perigoso queria ele?</p>
+    <p>Mas o destino gosta de testar quem ama. Toda vez que eles tentavam se encontrar, algo dava errado: ela ia para outro lugar, os planos se desfaziam, o momento escapava entre os dedos. Era como se uma magia antiga insistisse em adiar o inevitável.</p>
+    <div class="foto"><img src="cap1.jpg" onerror="this.parentNode.remove()"><div class="vazia">Uma foto de vocês no começo</div></div>
+  </section>
+
+  <!-- CAP II -->
+  <section class="pagina">
+    <div class="moldura"></div>
+    <div class="num">CAPÍTULO II</div>
+    <h2>O Primeiro Encontro</h2>
+    <p class="capitular">Cansado de esperar que a magia resolvesse por ele, o rapaz fez o que nunca tinha feito: mandou uma mensagem. Simples, direta, sem feitiço nenhum. <i>"Vamos?"</i> E marcou o lugar: ao lado de um condomínio, sob um céu comum que naquela noite não teve nada de comum.</p>
+    <p>Foi o primeiro beijo. E, porque ele é quem é, veio também a primeira piada. Ele tinha certeza de que ela ia odiar.</p>
+    <p>Ela riu.</p>
+    <p>E naquele riso o rapaz descobriu o primeiro segredo daquela moça: a lâmina era só a bainha. Por dentro, havia luz.</p>
+    <div class="foto"><img src="cap2.jpg" onerror="this.parentNode.remove()"><div class="vazia">Uma foto especial de vocês dois</div></div>
+    <div class="legenda">A primeira foto juntos</div>
+  </section>
+
+  <!-- CAP III -->
+  <section class="pagina">
+    <div class="moldura"></div>
+    <div class="num">CAPÍTULO III</div>
+    <h2>As Madrugadas</h2>
+    <p class="capitular">Depois daquela noite, vieram muitas outras. Ele mandava uma mensagem, <i>"posso te ver?"</i>, e atravessava a madrugada até a frente da casa dela. Ali, sentados sob as estrelas, eles conversavam até o céu clarear.</p>
+    <p>Falavam de tudo. De memes, das piadas que só os dois entendiam, de coisas de nerd que ele nunca tinha coragem de contar a ninguém. E foi ali que ele percebeu: ela não era só um rosto bonito. Ela sabia de muita coisa, entendia o mundo dele, e ao lado dela ele se sentia acolhido.</p>
+    <p>Às vezes ela o deixava entrar só para beber um pouco de água. Pequenos gestos, como os de quem cuida sem anunciar que está cuidando.</p>
+    <p>Ele já estava perdidamente apaixonado. Mas guardava tudo em silêncio, convencido de que ela gostava de outro, ou de que ele era apenas uma distração bonita.</p>
+    <div class="foto"><img src="cap3.jpg" onerror="this.parentNode.remove()"><div class="vazia">Uma foto de uma das noites de vocês</div></div>
+  </section>
+
+  <!-- CAP IV -->
+  <section class="pagina">
+    <div class="moldura"></div>
+    <div class="num">CAPÍTULO IV</div>
+    <h2>As Palavras Dela</h2>
+    <p class="capitular">Há quem diga que, nos reinos feéricos, as verdades mais poderosas são as que alguém tem coragem de dizer primeiro.</p>
+    <p>Enquanto ele passava mais tempo em Natal, chegou uma mensagem. Ela tinha acabado de terminar um livro sobre a morte, sobre a única certeza que todos temos, e decidiu que não deixaria mais o medo escolher por ela.</p>
+    <div class="charada">
+      <p>"Sabe aquela sensação estranha de olhar pra alguém e sentir cada átomo do seu corpo vibrar? Quando você está com aquela pessoa e você literalmente se sente em paz, sem pânico, sem ter medo de mostrar quem você realmente é…"</p>
+      <p>"Cansei de ter medo e de negar pra todos que me perguntavam isso. Eu me apaixonei por você."</p>
+      <p>"…principalmente suas piadas sem graça, elas sem sombra de dúvida são as piores que já ouvi, mas são uma das coisas que mais gosto em você."</p>
+    </div>
+    <p>O rapaz leu e releu. Todo aquele tempo com medo de não ser correspondido, e ela sentia o mesmo. Os dois tinham guardado o mesmo segredo, cada um de um lado da muralha. E foi ela, a moça que ele achava braba, quem teve a coragem de derrubá-la primeiro.</p>
+    <p>Então ele, que pensava demais antes de agir, respondeu com o coração aberto:</p>
+    <div class="charada">
+      <p>"Com vc acontecia momentos que nunca passei na minha vida, todos eles incríveis. Quando saía da sua casa, com a cabeça a mil, tentava constantemente dizer 'foi só um momento, só isso!', mas percebia que não era só isso."</p>
+      <p>"Vc tirou essa minha barreira amorosa."</p>
+      <p>"Toda vez que ia em Lagoa de Velhos, quando eu te via, parecia que eu me apaixonava de novo e de novo por vc."</p>
+    </div>
+    <p>Dois corações desconfiados, machucados por outras histórias, cada um achando que era o único a sentir. Bastou uma mensagem para descobrirem que estavam no mesmo lugar o tempo todo.</p>
+    <p>Ele guarda aquela mensagem até hoje, como quem guarda um tratado de paz entre duas cortes.</p>
+    <div class="foto"><img src="cap4.jpg" onerror="this.parentNode.remove()"><div class="vazia">Print da mensagem dela, ou uma foto de vocês</div></div>
+  </section>
+
+  <!-- CAP V -->
+  <section class="pagina">
+    <div class="moldura"></div>
+    <div class="num">CAPÍTULO V</div>
+    <h2>O Vínculo</h2>
+    <p class="capitular">Naquela mesma semana, ele começou a preparar tudo. E no dia 29 de outubro de 2022, véspera de um dia em que o país inteiro estava agitado, ele fez o pedido que importava mais do que qualquer outra escolha.</p>
+    <p>Não foi num palácio. Foi na casa da avó dele, cheia de gente, com a família inteira tirando onda. Uma tia pedia o doce que era dela. A rosa, coitada, tinha esperado tanto pelo grande dia que chegou murcha.</p>
+    <p>Mas ela disse sim.</p>
+    <p>E guardou aquela rosa. Eternizou. Uma rosa imperfeita, que esperou além do tempo e mesmo assim virou tesouro. Talvez seja o símbolo mais verdadeiro deste amor: não precisou ser perfeito para ser para sempre.</p>
+    <p class="citacao">Ali, o vínculo se firmou. 🌹</p>
+    <div class="foto"><img src="cap5.jpg" onerror="this.parentNode.remove()"><div class="vazia">A rosa eternizada, ou o dia do pedido</div></div>
+    <p>Depois daquela primeira rosa, vieram outras flores. O primeiro buquê que ele comprou para ela tinha rosas vermelhas, mosquitinhos e flores alaranjadas, e ele de camisa branca, todo arrumado, como um cavaleiro que finalmente aprendeu a chegar no tempo certo.</p>
+    <div class="foto" style="aspect-ratio:3/4;width:65%"><img src="cap5b.jpg" onerror="this.parentNode.remove()"><div class="vazia">O primeiro buquê</div></div>
+    <div class="legenda">O primeiro buquê</div>
+  </section>
+
+  <!-- CAP VI -->
+  <section class="pagina">
+    <div class="moldura"></div>
+    <div class="num">CAPÍTULO VI</div>
+    <h2>O Primeiro Inverno</h2>
+    <p class="capitular">Ele sempre acreditou que "eu te amo" não se diz à toa. Que o amor se constrói, pedra por pedra, antes de ganhar nome.</p>
+    <p>No primeiro Natal juntos, ela estava doente. A família foi para a confraternização, e ela ficou em casa. Ele também ficou. Deitado ao lado dela, cuidando, fazendo companhia, porque não existia festa no mundo melhor do que estar ali.</p>
+    <p>Dias depois, o ano virou com os dois juntos. E foi ali, na primeira virada de ano lado a lado, que ele entregou a primeira carta e disse, pela primeira vez, as três palavras que vinha construindo havia tanto tempo: <b>eu te amo</b>.</p>
+    <div class="foto" style="aspect-ratio:3/4;width:70%"><img src="cap6x.jpg" onerror="this.parentNode.remove()"><div class="vazia">Primeiro Ano Novo</div></div>
+    <div class="legenda">O primeiro Ano Novo juntos, vestidos de branco</div>
+    <p>Desde então, nenhum fim de ano passou sem que estivessem juntos.</p>
+    <p>Na virada de 2023 para 2024, abraçados no meio da multidão vestida de branco, os dois olharam para cima juntos enquanto o céu explodia em verde e dourado, como se as estrelas da Corte Noturna tivessem descido só para celebrar.</p>
+    <div class="foto" style="aspect-ratio:3/4;width:65%"><img src="cap6a.jpg" onerror="this.parentNode.remove()"><div class="vazia">Ano Novo 2024</div></div>
+    <div class="legenda">Rumo a 2024, sob os fogos</div>
+    <p>Na virada de 2024 para 2025, a tradição seguiu firme: uma árvore gigante de luzes vermelhas e douradas, fogos no céu e um beijo como se o mundo inteiro tivesse parado só para assistir. Depois, sob os coqueiros, balões dourados anunciando o novo ano, e os dois ali, de novo, começando mais um capítulo juntos.</p>
+    <div class="foto" style="aspect-ratio:3/4;width:70%"><img src="cap6.jpg" onerror="this.parentNode.remove()"><div class="vazia">Fim de ano</div></div>
+    <div class="legenda">Sob as luzes, rumo a 2025</div>
+    <div class="foto" style="aspect-ratio:3/4;width:65%;transform:rotate(2deg)"><img src="cap6b.jpg" onerror="this.parentNode.remove()"><div class="vazia">2025</div></div>
+    <div class="legenda">Feliz 2025, juntos</div>
+    <p>E na virada de 2025 para 2026, mais uma vez: ela encostada no ombro dele, os cachos colados no peito, os fogos rasgando o céu. Quatro fins de ano, quatro promessas silenciosas de que o próximo também seria juntos.</p>
+    <div class="foto" style="aspect-ratio:9/10;width:75%"><img src="cap6c.jpg" onerror="this.parentNode.remove()"><div class="vazia">2026</div></div>
+    <div class="legenda">Rumo a 2026, abraçados</div>
+  </section>
+
+  <!-- CAP VII -->
+  <section class="pagina">
+    <div class="moldura"></div>
+    <div class="num">CAPÍTULO VII</div>
+    <h2>A Curandeira</h2>
+    <p class="capitular">Em todas as cortes existem guerreiros, mas poucas têm uma verdadeira curandeira. Esta tem.</p>
+    <p>Ela estudava todos os dias. Ajudava na casa da avó. Sonhava em ser veterinária. Na primeira tentativa, a porta não abriu. Qualquer outra pessoa teria desistido. Ela não.</p>
+    <p>Foi para a Escola Agrícola de Jundiaí, fez o curso técnico em veterinária e saiu de lá <b>laureada</b>. O que ela quer, ela busca, até alcançar.</p>
+    <p>E é a única pessoa que ele conhece que sofre de verdade quando um animal sofre. Seus dois cachorros só tiveram uma vida mais digna, até o fim, porque ela existiu.</p>
+    <p>Nas aulas práticas, ela se transforma: um cabritinho no colo tomando mamadeira, uma cabra examinada com cuidado e firmeza. Nas mãos dela, até as criaturas mais assustadas se acalmam, como se reconhecessem ali a magia de uma verdadeira curandeira.</p>
+    <div class="galeria">
+      <figure><img src="cap7c.jpg"><figcaption>Mamadeira para o pequeno</figcaption></figure>
+      <figure><img src="cap7d.jpg"><figcaption>Mãos de curandeira</figcaption></figure>
+      <figure><img src="cap7e.jpg"><figcaption>As botas de quem pisa firme no próprio sonho</figcaption></figure>
+    </div>
+    <p>Ao lado dela, ele também mudou. No seu último ano no IF, aprendeu como nunca. Porque ver alguém lutar tanto pelos próprios sonhos faz a gente querer lutar pelos nossos.</p>
+    <p>E quando chegou a vez dele de vestir a beca, foi ela quem estava ali, entre confetes prateados e cortinas vermelhas, para selar a conquista com um beijo. Cada um coroou o outro no seu dia.</p>
+    <div class="galeria">
+      <figure><img src="cap7f.jpg"><figcaption>A formatura dele, entre confetes</figcaption></figure>
+      <figure><img src="cap7g.jpg"><figcaption>Diploma na mão, ela ao lado</figcaption></figure>
+    </div>
+    <p>No dia da formatura, de beca e faixa azul, foi ele quem ajeitou o capelo na cabeça dela. Um gesto pequeno, como quem coroa uma Grã-Senhora diante de toda a corte.</p>
+    <div class="foto" style="aspect-ratio:3/4;width:70%"><img src="cap7.jpg" onerror="this.parentNode.remove()"><div class="vazia">Formatura em Jundiaí</div></div>
+    <div class="legenda">Formatura do técnico em Veterinária</div>
+    <p>E então veio o dia em que a porta que antes não abriu se escancarou: aprovada em Medicina Veterinária na Uninassau, com bolsa de 100% pelo ProUni. Ela escreveu a vitória na própria pele, em tinta verde, como as marcas que os feéricos recebem quando selam uma promessa. A promessa que ela fez a si mesma, lá atrás, tinha sido cumprida.</p>
+    <div class="foto" style="aspect-ratio:3/4;width:65%"><img src="cap7b.jpg" onerror="this.parentNode.remove()"><div class="vazia">Aprovada em Medicina Veterinária</div></div>
+    <div class="legenda">100% ProUni · Medicina Veterinária</div>
+  </section>
+
+  <!-- CAP VIII -->
+  <section class="pagina">
+    <div class="moldura"></div>
+    <div class="num">CAPÍTULO VIII</div>
+    <h2>Viagens pelos Reinos</h2>
+    <p class="capitular">Os dois começaram a explorar o mundo como quem atravessa as terras de Prythian. A Lagoa do Carcará. Touros. A Paraíba. Cada lugar virou uma página nova.</p>
+    <p>A primeira de todas foi a Lagoa do Carcará. O sol se pondo dourado na areia, os óculos escuros dela refletindo o lago e ele, e uma careta só para provar que a Grã-Senhora também sabe ser boba quando está feliz.</p>
+    <div class="foto" style="aspect-ratio:3/4;width:65%"><img src="cap8d.jpg" onerror="this.parentNode.remove()"><div class="vazia">Lagoa do Carcará</div></div>
+    <div class="legenda">A primeira viagem: Lagoa do Carcará</div>
+    <p>E houve o chalé em Ponta Negra, no aniversário de três anos. Uma viagem de verdade, só os dois. Almoços com vistas de tirar o fôlego, e a sensação de que a vida, enfim, estava começando a ganhar a forma que eles tinham sonhado.</p>
+    <p>Nem toda viagem foi feita só de paz. Teve briga, teve noite dormida de cara virada. Mas toda corte que se preza conhece suas guerras. O que importa é que, depois de cada uma, eles sempre se encontraram de novo.</p>
+    <p class="citacao">Brigaram, se ajeitaram. Brigaram, se ajeitaram. E nunca soltaram as mãos.</p>
+    <p>O chalé parecia saído de um conto: casinhas de madeira com telhados de barro, caminhos de pedra e árvores tão grandes que filtravam o sol em ouro. Ali, entre as folhas, ele beijou a testa dela como quem jura lealdade a uma Grã-Senhora.</p>
+    <p>Durante o dia, a praia de Ponta Negra e um beijo com vista para o mar. À noite, um restaurante mexicano, chapéus enormes, risadas e quesadillas, porque até as cortes feéricas precisam de uma noite de festa.</p>
+    <div class="foto" style="aspect-ratio:3/4;width:75%"><img src="cap8a.jpg" onerror="this.parentNode.remove()"><div class="vazia">O chalé em Ponta Negra</div></div>
+    <div class="legenda">Três anos, entre as árvores do chalé</div>
+    <div class="galeria">
+      <figure><img src="chale1.jpg"><figcaption>As vielas do chalé</figcaption></figure>
+      <figure><img src="chale2.jpg"><figcaption>Caminhos de pedra e sol dourado</figcaption></figure>
+      <figure><img src="chale3.jpg"><figcaption>Um beijo com vista para o mar</figcaption></figure>
+      <figure><img src="chale4.jpg"><figcaption>Noite mexicana</figcaption></figure>
+      <figure><img src="chale5.jpg"><figcaption>Quesadillas e sorrisos</figcaption></figure>
+      <figure><img src="chale6.jpg"><figcaption>A noite no chalé</figcaption></figure>
+      <figure><img src="chale7.jpg"><figcaption>Céu azul em Ponta Negra</figcaption></figure>
+    </div>
+    <p>Na estrada para João Pessoa, ele ria para a câmera enquanto ela, mesmo no meio da viagem, não largava um livro aberto no colo. Até a caminho de um novo reino, ela levava outros mundos consigo.</p>
+    <div class="foto"><img src="cap8b.jpg" onerror="this.parentNode.remove()"><div class="vazia">A caminho de João Pessoa</div></div>
+    <div class="legenda">A caminho de João Pessoa, Paraíba</div>
+    <p>E houve a estrada para Touros, na BR, sob um céu tão azul que parecia pintado. De moto, com o vento no rosto e os cata-ventos girando no horizonte como sentinelas de um reino distante, os dois seguiam juntos rumo ao mar.</p>
+    <div class="foto" style="aspect-ratio:3/4;width:65%"><img src="cap8c.jpg" onerror="this.parentNode.remove()"><div class="vazia">Estrada para Touros</div></div>
+    <div class="legenda">Na BR, a caminho de Touros</div>
+    <p>Nas dunas de Genipabu, ela se sentou no alto da areia dourada, o vento brincando com o cabelo, olhando o mar como quem procura Velaris no horizonte. Ele ficou atrás, só guardando aquele instante.</p>
+    <div class="foto" style="aspect-ratio:3/4;width:65%"><img src="cap8e.jpg" onerror="this.parentNode.remove()"><div class="vazia">Dunas de Genipabu</div></div>
+    <div class="legenda">Dunas de Genipabu</div>
+    <p>Na Lagoa do Bonfim, as águas doces brilhavam sob o sol da tarde. Ele, molhado e sorridente; ela, de óculos escuros, alternando entre o sorriso mais lindo e as caretas mais marmotas. Até o reflexo do sol nos óculos dela parecia uma estrela guardada só para os dois.</p>
+    <div class="galeria">
+      <figure><img src="bonfim1.jpg"><figcaption>Sol dourado na Lagoa do Bonfim</figcaption></figure>
+      <figure><img src="bonfim2.jpg"><figcaption>A Grã-Senhora e seu biquinho</figcaption></figure>
+      <figure><img src="bonfim3.jpg"><figcaption>Pose séria (só que não)</figcaption></figure>
+      <figure><img src="bonfim4.jpg"><figcaption>A careta oficial da lagoa</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- CAP IX -->
+  <section class="pagina">
+    <div class="moldura"></div>
+    <div class="num">CAPÍTULO IX</div>
+    <h2>Parceiros Iguais</h2>
+    <p class="capitular">Nos livros que ela ama, o vínculo mais bonito não é aquele em que um salva o outro. É aquele em que os dois ficam lado a lado, como iguais.</p>
+    <p>Foi assim desde o começo. Nenhum dos dois tinha dinheiro, nenhum vinha de família rica. Tudo o que têm, construíram juntos. Hoje, sonham em comprar uma moto juntos, porque prosperar a dois é sempre mais fácil do que sozinho.</p>
+    <p>E entre os grandes planos, há as pequenas magias do dia a dia. Quando ela fica quieta, ele mexe com ela. Quando ele fica quieto, ela mexe com ele. Ele a apresentou aos seus mundos: foram ao cinema ver Demon Slayer, e agora preparam Black Clover como um verdadeiro evento, com direito a piadas sobre o Rei Mago.</p>
+    <p>Ele entrou no mundo dela, ela entrou no dele. E, no meio do caminho, os dois criaram um terceiro mundo que é só deles.</p>
+    <p>Às vezes a magia mora num fim de semana qualquer: uma passada no mercado, ela distraída no celular, e depois uma pizzaria que virou lenda entre os dois, uma das melhores que já provaram. Banquetes feéricos também cabem numa mesa simples, desde que seja dividida.</p>
+    <div class="foto" style="aspect-ratio:3/4;width:70%"><img src="cap9.jpg" onerror="this.parentNode.remove()"><div class="vazia">Na pizzaria</div></div>
+    <div class="legenda">A pizzaria que virou lenda</div>
+    <div class="foto" style="aspect-ratio:3/4;width:60%;transform:rotate(2deg)"><img src="cap9b.jpg" onerror="this.parentNode.remove()"><div class="vazia">O mesmo fim de semana</div></div>
+    <div class="legenda">O mesmo fim de semana</div>
+    <p>E há as festas do povo, como o São João, entre bandeirinhas e caretas. Nem toda foto precisa ser séria: as melhores são as que guardam a bagunça de dois que nunca param de mexer um com o outro.</p>
+    <div class="foto" style="aspect-ratio:3/4;width:65%"><img src="cap9c.jpg" onerror="this.parentNode.remove()"><div class="vazia">São João</div></div>
+    <div class="legenda">São João, entre bandeirinhas e caretas</div>
+    <p>E quando o mundo dele ganhou luzes de neon, ela foi junto. No Go! RN, entre crachás e telas brilhantes, os dois mostraram que não existe corte onde só um entra: quem ama, atravessa os portais do outro.</p>
+    <div class="foto" style="aspect-ratio:3/4;width:65%"><img src="cap9d.jpg" onerror="this.parentNode.remove()"><div class="vazia">Go! RN 2026</div></div>
+    <div class="legenda">Go! RN 2026</div>
+  </section>
+
+  <!-- CAP X -->
+  <section class="pagina">
+    <div class="moldura"></div>
+    <div class="num">CAPÍTULO X</div>
+    <h2>A Cidade da Luz Estelar</h2>
+    <p class="capitular">Ela sonha em conhecer Velaris, a cidade escondida sob as estrelas, onde a Corte Noturna guarda o que tem de mais precioso. Talvez, um dia, os dois encontrem a sua Velaris em algum canto do mundo real.</p>
+    <p>Enquanto isso, ele segue construindo. Ainda não fez o pedido mais importante de todos, porque quer oferecer primeiro um lar: uma casa, comida na mesa, roupa lavada e a certeza de que ela nunca vai precisar se preocupar.</p>
+    <p>Mas ele já sabe. Um dia, esse pedido vai acontecer.</p>
+    <p class="citacao">Porque algumas histórias não terminam.<br>Elas só mudam de livro.</p>
+    <div class="foto" style="aspect-ratio:3/4;width:75%"><img src="cap10.jpg" onerror="this.parentNode.remove()"><div class="vazia">A foto favorita de vocês</div></div>
+    <div class="legenda">Dois corações, um só horizonte · Lagoa do Bonfim</div>
+  </section>
+
+  <!-- GALERIA -->
+  <section class="pagina">
+    <div class="num">GALERIA</div>
+    <h2>Memórias da Corte</h2>
+    <p style="text-align:center;font-style:italic">Pequenos tesouros guardados entre as páginas.</p>
+    <div class="galeria">
+      <figure><img src="gal01.jpg"><figcaption>Noite de cinema: Homem-Aranha</figcaption></figure>
+      <figure><img src="gal02.jpg"><figcaption>Jantar sob as luzes de Ponta Negra</figcaption></figure>
+      <figure><img src="gal03.jpg"><figcaption>Um beijo entre as palmeiras</figcaption></figure>
+      <figure><img src="gal04.jpg"><figcaption>A careta antes do macarrão</figcaption></figure>
+      <figure><img src="gal05.jpg"><figcaption>Festa de forró com Iguinho e Lulinha</figcaption></figure>
+      <figure><img src="gal06.jpg"><figcaption>Momentos marmotentos</figcaption></figure>
+      <figure><img src="gal07.jpg"><figcaption>Mais marmotagem</figcaption></figure>
+      <figure><img src="gal08.jpg"><figcaption>Na formatura da mãe dela</figcaption></figure>
+      <figure><img src="gal09.jpg"><figcaption>Um beijo roubado</figcaption></figure>
+      <figure><img src="gal10.jpg" style="aspect-ratio:4/3"><figcaption>Gravado como fita antiga</figcaption></figure>
+      <figure><img src="gal11.jpg"><figcaption>Mesmo careca, ela achou lindo</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- CHARADA -->
+  <section class="pagina">
+    <div class="moldura"></div>
+    <div class="num">A PORTA TRANCADA</div>
+    <h2>A Charada da Grã-Senhora</h2>
+    <p>Certa vez, uma rainha cruel deu uma charada a uma mortal, e a resposta salvou um reino. Certa vez, você deu uma charada a mim, e eu acertei.</p>
+    <p>Agora é a sua vez. Responda, e a última página se abrirá.</p>
+    <div class="charada">
+      <p>Fui escolhida para um momento e esperei além do meu tempo.<br>
+      Cheguei cansada, murcha, imperfeita,<br>
+      entre risos e uma tia pedindo doce.<br>
+      Qualquer um teria me jogado fora,<br>
+      mas uma mão me guardou para sempre.<br><br>
+      <b>O que eu sou?</b></p>
+      <input class="resposta" id="resposta" placeholder="Sua resposta..." onkeydown="if(event.key==='Enter')verificar()">
+      <button class="botao escuro" onclick="verificar()">Responder</button>
+      <div id="retorno"></div>
+    </div>
+  </section>
+
+  <!-- CARTA FINAL -->
+  <section class="pagina" id="paginaCarta">
+    <div class="moldura"></div>
+    <div class="num">EPÍLOGO</div>
+    <h2>Quatro Anos</h2>
+    <div id="carta" class="bloqueada">
+      <p class="capitular">Ester,</p>
+      <p>Quatro anos atrás, eu tinha medo de você. Achava que você era braba, que nunca ia olhar pra mim. Hoje eu sei que você é a pessoa mais forte, esforçada e cuidadosa que eu conheço.</p>
+      <p>Você me ensinou que o amor não é só sentimento. É parceria. É acordar e escolher a mesma pessoa de novo, mesmo depois da briga, mesmo nos dias difíceis.</p>
+      <p>Lembra da mensagem em que você disse que cansou de ter medo? Eu também tinha medo. Você foi corajosa por nós dois, e eu nunca vou esquecer disso.</p>
+      <p>Obrigado por cada madrugada na frente da sua casa, por rir das minhas piadas (que você mesma disse que são as piores do mundo, e eu vou continuar contando), por ter guardado aquela rosa murcha e por ter me deixado entrar no seu mundo.</p>
+      <p>Ainda temos uma moto pra comprar, uma Velaris pra encontrar e muitos capítulos pra escrever. E eu quero escrever todos eles com você.</p>
+      <p>Feliz quatro anos, meu amor.</p>
+      <p class="assinatura">Seu, para sempre,<br>Niviton ✦</p>
+      <div class="foto"><img src="final.jpg" onerror="this.parentNode.remove()"><div class="vazia">A foto mais bonita de vocês</div></div>
+    </div>
+  </section>
+
+</div>
+
+<div class="nav" id="nav">
+  <button id="ant" onclick="anterior()">‹</button>
+  <span id="contagem"></span>
+  <button id="prox" onclick="proxima()">›</button>
+</div>
+
+<script>
+  // Data do pedido de namoro
+  const INICIO = new Date(2022, 9, 29);
+
+  // Estrelas de fundo
+  const ceu = document.getElementById('estrelas');
+  for (let i = 0; i < 90; i++) {
+    const s = document.createElement('div');
+    s.className = 'estrela';
+    const t = Math.random() * 2 + 1;
+    s.style.width = s.style.height = t + 'px';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 100 + '%';
+    s.style.animationDelay = Math.random() * 3 + 's';
+    ceu.appendChild(s);
+  }
+
+  // Contador
+  function atualizarContador() {
+    const dias = Math.floor((new Date() - INICIO) / 86400000);
+    document.getElementById('contador').innerHTML = 'Unidos pelo vínculo há <b>' + dias.toLocaleString('pt-BR') + ' dias</b>';
+  }
+  atualizarContador();
+
+  // Páginas
+  const paginas = [...document.querySelectorAll('.pagina')];
+  const indiceCharada = paginas.length - 2;
+  let atual = 0, liberada = false, animando = false;
+
+  function mostrar(novo, direcao) {
+    if (animando || novo < 0 || novo >= paginas.length) return;
+    if (novo > indiceCharada && !liberada) return;
+    animando = true;
+    const velha = paginas[atual], nova = paginas[novo];
+    if (direcao > 0) {
+      velha.classList.add('saindo');
+      setTimeout(() => {
+        velha.classList.remove('saindo', 'ativa');
+        nova.classList.add('ativa'); nova.scrollTop = 0;
+        animando = false;
+      }, 650);
+    } else {
+      velha.classList.remove('ativa');
+      nova.classList.add('voltando', 'ativa'); nova.scrollTop = 0;
+      setTimeout(() => { nova.classList.remove('voltando'); animando = false; }, 700);
+    }
+    atual = novo;
+    atualizarNav();
+  }
+  function proxima() { mostrar(atual + 1, 1); }
+  function anterior() { mostrar(atual - 1, -1); }
+
+  function atualizarNav() {
+    document.getElementById('nav').style.display = atual === 0 ? 'none' : 'flex';
+    document.getElementById('ant').disabled = atual === 0;
+    document.getElementById('prox').disabled = atual === paginas.length - 1 || (atual === indiceCharada && !liberada);
+    document.getElementById('contagem').textContent = atual + ' / ' + (paginas.length - 1);
+  }
+  atualizarNav();
+
+  // Charada (aceita "rosa", "a rosa", "uma rosa"...)
+  function verificar() {
+    const r = document.getElementById('resposta').value.trim().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const retorno = document.getElementById('retorno');
+    if (r.includes('rosa')) {
+      liberada = true;
+      retorno.textContent = 'A porta se abre... 🌹';
+      document.getElementById('carta').classList.remove('bloqueada');
+      atualizarNav();
+      setTimeout(proxima, 1200);
+    } else {
+      retorno.textContent = 'Não é isso... pense em algo que você guarda até hoje.';
+    }
+  }
+
+  // Teclado e deslizar o dedo
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT') return;
+    if (e.key === 'ArrowRight') proxima();
+    if (e.key === 'ArrowLeft') anterior();
+  });
+  let x0 = null;
+  document.addEventListener('touchstart', e => x0 = e.touches[0].clientX);
+  document.addEventListener('touchend', e => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0;
+    if (Math.abs(dx) > 60 && atual > 0) dx < 0 ? proxima() : anterior();
+    x0 = null;
+  });
+
+  // ===== MAGIA =====
+  (function(){
+    const c=document.getElementById('ceu'),x=c.getContext('2d');let W,H,est=[],luz=[],cad=[];
+    function tam(){W=c.width=innerWidth*devicePixelRatio;H=c.height=innerHeight*devicePixelRatio;
+      est=Array.from({length:160},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.4*devicePixelRatio+.3,f:Math.random()*6}));
+      luz=Array.from({length:26},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.3,vy:-Math.random()*.4-.1,f:Math.random()*6}));}
+    tam();addEventListener('resize',tam);
+    function loop(t){x.clearRect(0,0,W,H);
+      for(const e of est){x.globalAlpha=.35+.65*Math.abs(Math.sin(t/900+e.f));x.fillStyle='#fff';x.beginPath();x.arc(e.x,e.y,e.r,0,7);x.fill();}
+      for(const l of luz){l.x+=l.vx*devicePixelRatio;l.y+=l.vy*devicePixelRatio;if(l.y<-10){l.y=H+10;l.x=Math.random()*W}
+        const a=.4+.6*Math.abs(Math.sin(t/700+l.f));const g=x.createRadialGradient(l.x,l.y,0,l.x,l.y,9*devicePixelRatio);
+        g.addColorStop(0,'rgba(255,240,190,'+a+')');g.addColorStop(1,'rgba(212,175,106,0)');x.globalAlpha=1;x.fillStyle=g;
+        x.beginPath();x.arc(l.x,l.y,9*devicePixelRatio,0,7);x.fill();}
+      if(Math.random()<.006)cad.push({x:Math.random()*W*.8,y:Math.random()*H*.4,v:14*devicePixelRatio,l:1});
+      cad=cad.filter(k=>k.l>0);for(const k of cad){x.globalAlpha=k.l;x.strokeStyle='#fff6d6';x.lineWidth=1.5*devicePixelRatio;
+        x.beginPath();x.moveTo(k.x,k.y);x.lineTo(k.x-k.v*6,k.y-k.v*3);x.stroke();k.x+=k.v;k.y+=k.v/2;k.l-=.03;}
+      x.globalAlpha=1;requestAnimationFrame(loop);}
+    requestAnimationFrame(loop);
+  })();
+  function petala(){const p=document.createElement('div');p.className='petala';
+    p.style.left=Math.random()*100+'vw';const d=7+Math.random()*7;p.style.animationDuration=d+'s';
+    p.style.setProperty('--dx',(Math.random()*200-100)+'px');p.style.setProperty('--r',(Math.random()*720-360)+'deg');
+    p.style.transform='scale('+(.6+Math.random()*.8)+')';document.body.appendChild(p);setTimeout(()=>p.remove(),d*1000);}
+  setInterval(petala,1400);
+  function faiscas(cx,cy,n){for(let i=0;i<n;i++){const f=document.createElement('div');f.className='faisca';
+    f.style.left=cx+'px';f.style.top=cy+'px';const a=Math.random()*6.28,r=40+Math.random()*90;
+    f.style.setProperty('--dx',Math.cos(a)*r+'px');f.style.setProperty('--dy',Math.sin(a)*r+'px');
+    document.body.appendChild(f);setTimeout(()=>f.remove(),900);}}
+  addEventListener('pointerdown',e=>{if(e.target.tagName!=='INPUT')faiscas(e.clientX,e.clientY,8)});
+  const _mostrar=mostrar;mostrar=function(n,d){const ok=!animando;_mostrar(n,d);if(ok)faiscas(innerWidth/2,innerHeight/2,14)};
+  function abrirLivro(e){const capa=paginas[0];capa.classList.add('abrindo');faiscas(innerWidth/2,innerHeight/2,40);
+    for(let i=0;i<12;i++)setTimeout(petala,i*80);setTimeout(()=>{capa.classList.remove('abrindo','ativa');paginas[1].classList.add('ativa');atual=1;atualizarNav();},1050);}
+  const _verificar=verificar;verificar=function(){_verificar();if(liberada){document.querySelector('.charada').classList.add('liberou');
+    faiscas(innerWidth/2,innerHeight/2,60);for(let i=0;i<40;i++)setTimeout(petala,i*40);}};
+</script>
+</body>
+</html>
